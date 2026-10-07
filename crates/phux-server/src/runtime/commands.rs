@@ -179,6 +179,7 @@ fn launch_pane_actor(
         actor.set_live_session_probe(live_session_probe(state, terminal));
         agent_rx
     });
+    let program_status_rx = actor.subscribe_program_status();
     let wire_terminal_id = state.with_mut(|s| {
         let _ = s.spawn_resource_actor(terminal, handle, terminal_token, actor.run());
         if has_pty {
@@ -197,6 +198,7 @@ fn launch_pane_actor(
     if let Some(agent_rx) = agent_rx {
         spawn_agent_state_drain(state.clone(), wire_terminal_id.clone(), agent_rx);
     }
+    super::program_status::spawn_drain(state.clone(), wire_terminal_id.clone(), program_status_rx);
     spawn_terminal_exit_watcher(
         state.clone(),
         terminal,

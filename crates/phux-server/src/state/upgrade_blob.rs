@@ -484,6 +484,7 @@ const fn exit_facet(blob: RetainedExitBlob) -> phux_protocol::wire::info::ExitFa
 type PaneExitWatchers = Vec<(
     ResourceId,
     oneshot::Receiver<phux_core::process::ExitOutcome>,
+    Option<tokio::sync::watch::Receiver<Vec<crate::resource::terminal::program_status::Record>>>,
 )>;
 
 /// What the pane pass produces: the wire-id -> core-id map the re-link passes
@@ -512,7 +513,7 @@ impl ServerState {
         clippy::type_complexity,
         reason = "the runtime immediately consumes each rebuilt pane id and its one-shot exit receiver"
     )]
-    pub fn rebuild_from_blob(
+    pub(crate) fn rebuild_from_blob(
         &mut self,
         blob: &StateBlob,
     ) -> Result<PaneExitWatchers, RebuildError> {
@@ -591,7 +592,7 @@ impl ServerState {
             self.idspace
                 .bind_terminal(core, WireResourceId::local(carried.wire_id));
             self.spawn_resource_actor(core, bundle.handle, token, bundle.actor.run());
-            panes.exit_watchers.push((core, bundle.exit_notify));
+            panes.exit_watchers.push((core, bundle.exit_notify, None));
         }
     }
 
@@ -689,11 +690,12 @@ impl ServerState {
             self.idspace
                 .bind_terminal(core, WireResourceId::local(p.wire_id));
             let crate::terminal_actor::TerminalActorBundle {
-                actor,
+                mut actor,
                 handle,
                 token,
                 exit_notify,
             } = bundle;
+            let program_status_rx = actor.subscribe_program_status();
             self.spawn_resource_actor(core, handle, token, actor.run());
             // ADR-0124: what the old image knew about this pane's retention.
             if let Some(secs) = p.retain_secs {
@@ -703,7 +705,9 @@ impl ServerState {
                 self.restore_retained_exit(core, exit_facet(exit));
             }
             if let Some(exit_notify) = exit_notify {
-                panes.exit_watchers.push((core, exit_notify));
+                panes
+                    .exit_watchers
+                    .push((core, exit_notify, Some(program_status_rx)));
             }
             panes.core_ids.insert(p.wire_id, core);
         }

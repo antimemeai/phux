@@ -39,6 +39,7 @@ pub mod keyed_ops;
 pub mod operation_dedupe;
 mod path_search;
 mod process_env;
+mod program_status;
 /// Shared per-generation state both pane output pumps enforce.
 mod pump;
 pub mod resource_commands;
@@ -1086,7 +1087,11 @@ fn resume_session_tree(
     root_token: &CancellationToken,
 ) -> Result<(), ServerError> {
     let exit_watchers = state.with_mut(|s| s.rebuild_from_blob(blob))?;
-    for (pane, exit_notify) in exit_watchers {
+    for (pane, exit_notify, program_status_rx) in exit_watchers {
+        if let Some(rx) = program_status_rx {
+            let wire = state.with_mut(|s| s.intern_terminal_wire(pane));
+            program_status::spawn_drain(state.clone(), wire, rx);
+        }
         spawn_terminal_exit_watcher(
             state.clone(),
             pane,
