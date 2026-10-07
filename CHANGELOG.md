@@ -9,6 +9,19 @@ It is exempt from the `docs/` frontmatter and TL;DR gates in
 at `docs/spec/CHANGELOG.md` and is hand-maintained; it is a different file and
 keeps every gate.
 
+## [0.53.0](https://github.com/no-phux/phux/compare/v0.52.0...v0.53.0) (2026-10-07)
+
+
+### Features
+
+* **network:** prepare Defguard-backed self-hosted federation ([bd8596e](https://github.com/no-phux/phux/commit/bd8596e7846e983a216fe91cf16f602bb2bdea4b))
+
+
+### Documentation
+
+* **adr:** ratify ADR-0075, ADR-0076, ADR-0078 ([1939adc](https://github.com/no-phux/phux/commit/1939adc9cf4b0e2865dfacc7c92d55b2d3b9ed2c))
+* **network:** clarify concrete listener exposure boundary ([0fd4e51](https://github.com/no-phux/phux/commit/0fd4e511621f50c70c857ef0300b90fcd34a295f))
+
 ## [0.52.0](https://github.com/no-phux/phux/compare/v0.51.0...v0.52.0) (2026-10-07)
 
 
